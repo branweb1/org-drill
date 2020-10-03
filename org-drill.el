@@ -711,7 +711,8 @@ CMD is bound, or nil if it is not bound to a key."
   "Like `org-map-entries', but only drill entries are processed."
   (let ((org-drill-scope (or scope org-drill-scope))
         (org-drill-match (or drill-match org-drill-match)))
-    (apply 'org-map-entries func
+    (apply 'org-map-entries
+           func
            (concat "+" org-drill-question-tag
                    (if (and (stringp org-drill-match)
                             (not (member (elt org-drill-match 0) '(?+ ?- ?|))))
@@ -722,7 +723,7 @@ CMD is bound, or nil if it is not bound to a key."
              (file-no-restriction 'file)
              (directory
               (directory-files (file-name-directory (buffer-file-name))
-                               t "\\.org$"))
+                               t "^[^\\.]+\\.org$"))
              (t org-drill-scope))
            skip)))
 
