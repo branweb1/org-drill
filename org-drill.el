@@ -1,4 +1,4 @@
-;;; -*- coding: utf-8-unix -*-
+;;; -*- coding: utf-8-unix; lexical-binding: t; -*-
 ;;; org-drill.el - Self-testing using spaced repetition
 ;;;
 ;;; Copyright (C) 2010-2015  Paul Sexton
@@ -2679,48 +2679,49 @@ STATUS is one of the following values:
                             sym1)))))
 
 
-(defun org-map-drill-entry-function ()
-  (org-drill-progress-message
-   (+ (length *org-drill-new-entries*)
-      (length *org-drill-overdue-entries*)
-      (length *org-drill-young-mature-entries*)
-      (length *org-drill-old-mature-entries*)
-      (length *org-drill-failed-entries*))
-   (incf cnt))
-  (cond
-   ((not (org-drill-entry-p))
-    nil)               ; skip
-   (t
-    (when (and (not warned-about-id-creation)
-               (null (org-id-get)))
-      (message (concat "Creating unique IDs for items "
-                       "(slow, but only happens once)"))
-      (sit-for 0.5)
-      (setq warned-about-id-creation t))
-    (org-id-get-create) ; ensure drill entry has unique ID
-    (destructuring-bind (status due age)
-        (org-drill-entry-status)
-      (case status
-        (:unscheduled
-         (incf *org-drill-dormant-entry-count*))
-        ;; (:tomorrow
-        ;;  (incf *org-drill-dormant-entry-count*)
-        ;;  (incf *org-drill-due-tomorrow-count*))
-        (:future
-         (incf *org-drill-dormant-entry-count*)
-         (if (eq -1 due)
-             (incf *org-drill-due-tomorrow-count*)))
-        (:new
-         (push (point-marker) *org-drill-new-entries*))
-        (:failed
-         (push (point-marker) *org-drill-failed-entries*))
-        (:young
-         (push (point-marker) *org-drill-young-mature-entries*))
-        (:overdue
-         (push (list (point-marker) due age) overdue-data))
-        (:old
-         (push (point-marker) *org-drill-old-mature-entries*))
-        )))))
+(defun org-map-drill-entry-function (warned-about-id-creation)
+  (let ((cnt 0))
+    (org-drill-progress-message
+     (+ (length *org-drill-new-entries*)
+        (length *org-drill-overdue-entries*)
+        (length *org-drill-young-mature-entries*)
+        (length *org-drill-old-mature-entries*)
+        (length *org-drill-failed-entries*))
+     (incf cnt))
+    (cond
+     ((not (org-drill-entry-p))
+      nil)               ; skip
+     (t
+      (when (and (not warned-about-id-creation)
+                 (null (org-id-get)))
+        (message (concat "Creating unique IDs for items "
+                         "(slow, but only happens once)"))
+        (sit-for 0.5)
+        (setq warned-about-id-creation t))
+      (org-id-get-create) ; ensure drill entry has unique ID
+      (destructuring-bind (status due age)
+          (org-drill-entry-status)
+        (case status
+          (:unscheduled
+           (incf *org-drill-dormant-entry-count*))
+          ;; (:tomorrow
+          ;;  (incf *org-drill-dormant-entry-count*)
+          ;;  (incf *org-drill-due-tomorrow-count*))
+          (:future
+           (incf *org-drill-dormant-entry-count*)
+           (if (eq -1 due)
+               (incf *org-drill-due-tomorrow-count*)))
+          (:new
+           (push (point-marker) *org-drill-new-entries*))
+          (:failed
+           (push (point-marker) *org-drill-failed-entries*))
+          (:young
+           (push (point-marker) *org-drill-young-mature-entries*))
+          (:overdue
+           (push (list (point-marker) due age) overdue-data))
+          (:old
+           (push (point-marker) *org-drill-old-mature-entries*))
+          ))))))
 
 
 (defun org-drill (&optional scope drill-match resume-p)
@@ -2770,8 +2771,7 @@ than starting a new one."
 work correctly with older versions of org mode. Your org mode version (%s) appears to be older than
 7.9.3f. Please consider installing a more recent version of org mode." (org-release)))))
   (let ((end-pos nil)
-        (overdue-data nil)
-        (cnt 0))
+        (overdue-data nil))
     (block org-drill
       (unless resume-p
         (org-drill-free-markers t)
@@ -2796,7 +2796,7 @@ work correctly with older versions of org mode. Your org mode version (%s) appea
               (let ((org-trust-scanner-tags t)
                     (warned-about-id-creation nil))
                 (org-map-drill-entries
-                 'org-map-drill-entry-function
+                 (lambda () (org-map-drill-entry-function warned-about-id-creation))
                  scope drill-match)
                 (org-drill-order-overdue-entries overdue-data)
                 (setq *org-drill-overdue-entry-count*
