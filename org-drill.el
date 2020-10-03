@@ -823,25 +823,6 @@ drill entry."
   (and (org-drill-entry-p)
        (member "leech" (org-get-local-tags))))
 
-
-;; (defun org-drill-entry-due-p ()
-;;   (cond
-;;    (*org-drill-cram-mode*
-;;     (let ((hours (org-drill-hours-since-last-review)))
-;;       (and (org-drill-entry-p)
-;;            (or (null hours)
-;;                (>= hours org-drill-cram-hours)))))
-;;    (t
-;;     (let ((item-time (org-get-scheduled-time (point))))
-;;       (and (org-drill-entry-p)
-;;            (or (not (eql 'skip org-drill-leech-method))
-;;                (not (org-drill-entry-leech-p)))
-;;            (or (null item-time)         ; not scheduled
-;;                (not (minusp             ; scheduled for today/in past
-;;                      (- (time-to-days (current-time))
-;;                         (time-to-days item-time))))))))))
-
-
 (defun org-drill-entry-days-overdue ()
   "Returns:
 - NIL if the item is not to be regarded as scheduled for review at all.
@@ -1491,29 +1472,6 @@ of QUALITY."
       'edit)
      (t
       nil))))
-
-
-;; (defun org-drill-hide-all-subheadings-except (heading-list)
-;;   "Returns a list containing the position of each immediate subheading of
-;; the current topic."
-;;   (let ((drill-entry-level (org-current-level))
-;;         (drill-sections nil)
-;;         (drill-heading nil))
-;;     (org-show-subtree)
-;;     (save-excursion
-;;       (org-map-entries
-;;        (lambda ()
-;;          (when (and (not (outline-invisible-p))
-;;                     (> (org-current-level) drill-entry-level))
-;;            (setq drill-heading (org-get-heading t))
-;;            (unless (and (= (org-current-level) (1+ drill-entry-level))
-;;                         (member drill-heading heading-list))
-;;              (hide-subtree))
-;;            (push (point) drill-sections)))
-;;        "" 'tree))
-;;     (reverse drill-sections)))
-
-
 
 (defun org-drill-hide-subheadings-if (test)
   "TEST is a function taking no arguments. TEST will be called for each
@@ -2299,10 +2257,6 @@ later using `org-drill-resume'.
 See `org-drill' for more details."
   (interactive)
   (org-drill-goto-drill-entry-heading)
-  ;;(unless (org-part-of-drill-entry-p)
-  ;;  (error "Point is not inside a drill entry"))
-  ;;(unless (org-at-heading-p)
-  ;;  (org-back-to-heading))
   (let ((card-type (org-entry-get (point) "DRILL_CARD_TYPE" t))
         (answer-fn 'org-drill-present-default-answer)
         (present-empty-cards nil)
@@ -2996,28 +2950,6 @@ values as `org-drill-scope'."
     (add-to-list 'org-font-lock-extra-keywords
                  (first org-drill-cloze-keywords))))
 
-
-;; Can't add to org-mode-hook, because local variables won't have been loaded
-;; yet.
-
-;; (defun org-drill-add-cloze-fontification ()
-;;   (when (eql major-mode 'org-mode)
-;;     ;; Compute local versions of the regexp for cloze deletions, in case
-;;     ;; the left and right delimiters are redefined locally.
-;;     (setq-local org-drill-cloze-regexp (org-drill--compute-cloze-regexp))
-;;     (setq-local org-drill-cloze-keywords (org-drill--compute-cloze-keywords))
-;;     (when org-drill-use-visible-cloze-face-p
-;;       (font-lock-add-keywords nil       ;'org-mode
-;;                               org-drill-cloze-keywords
-;;                               nil))))
-
-;; XXX
-;; (add-hook 'hack-local-variables-hook
-;;           'org-drill-add-cloze-fontification)
-;;
-;; (org-drill-add-cloze-fontification)
-
-
 ;;; Synching card collections =================================================
 
 
@@ -3420,29 +3352,6 @@ returns its return value."
                   (spelln-integer-in-language drilled-number 'english-gb)
                   'face highlight-face))
          (spelln-integer-in-language drilled-number language))))))))
-
-
-;; (defun org-drill-show-answer-translate-number (reschedule-fn)
-;;   (let* ((language (read (org-entry-get (point) "DRILL_LANGUAGE" t)))
-;;          (highlight-face 'font-lock-warning-face)
-;;          (non-english
-;;           (let ((spelln-language language))
-;;             (propertize (spelln-integer-in-words *drilled-number*)
-;;                         'face highlight-face)))
-;;          (english
-;;           (let ((spelln-language 'english-gb))
-;;             (propertize (spelln-integer-in-words *drilled-number*)
-;;                         'face 'highlight-face))))
-;;     (with-replaced-entry-text
-;;      (cond
-;;       ((eql 'to-english *drilled-number-direction*)
-;;        (format "\nThe English translation of %s is:\n\n%s\n"
-;;                non-english english))
-;;       (t
-;;        (format "\nThe %s translation of %s is:\n\n%s\n"
-;;                (capitalize (format "%s" language))
-;;                english non-english)))
-;;      (funcall reschedule-fn))))
 
 
 ;;; `spanish_verb' card type ==================================================
