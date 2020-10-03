@@ -714,7 +714,7 @@ CMD is bound, or nil if it is not bound to a key."
     (apply 'org-map-entries func
            (concat "+" org-drill-question-tag
                    (if (and (stringp org-drill-match)
-                            (not (member '(?+ ?- ?|) (elt org-drill-match 0))))
+                            (not (member (elt org-drill-match 0) '(?+ ?- ?|))))
                        "+" "")
                    (or org-drill-match ""))
            (case org-drill-scope
@@ -1534,7 +1534,7 @@ the current topic."
                         (funcall test))
              (hide-subtree))
            (push (point) drill-sections)))
-       "" 'tree))
+       t 'tree))
     (reverse drill-sections)))
 
 
