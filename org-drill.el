@@ -44,7 +44,7 @@
 ;;; See the file README.org for more detailed documentation.
 
 
-(eval-when-compile (require 'cl))
+(eval-when-compile (require 'cl-lib))
 (eval-when-compile (require 'hi-lock))
 (require 'cl-lib)
 (require 'hi-lock)
@@ -252,9 +252,9 @@ the hidden cloze during a test.")
 
 (defun org-drill--compute-cloze-keywords ()
   (list (list (org-drill--compute-cloze-regexp)
-              (copy-list '(1 'org-drill-visible-cloze-face nil))
-              (copy-list '(2 'org-drill-visible-cloze-hint-face t))
-              (copy-list '(3 'org-drill-visible-cloze-face nil))
+              (cl-copy-list '(1 'org-drill-visible-cloze-face nil))
+              (cl-copy-list '(2 'org-drill-visible-cloze-hint-face t))
+              (cl-copy-list '(3 'org-drill-visible-cloze-face nil))
               )))
 
 (defvar-local org-drill-cloze-regexp
@@ -1008,7 +1008,7 @@ in the matrix."
      (learn-str
       (let ((learn-data (or (and learn-str
                                  (read learn-str))
-                            (copy-list initial-repetition-state))))
+                            (cl-copy-list initial-repetition-state))))
         (list (nth 0 learn-data)        ; last interval
               (nth 1 learn-data)        ; repetitions
               (org-drill-entry-failure-count)
