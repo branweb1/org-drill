@@ -236,6 +236,11 @@ during a drill session."
 (add-hook 'org-font-lock-set-keywords-hook 'org-drill-add-cloze-fontification)
 
 
+(defvar org-drill-random-state (cl-make-random-state)
+  "See https://www.gnu.org/software/emacs/manual/html_node/cl/Random-Numbers.html.
+Used by 'cl-random'.")
+
+
 (defvar org-drill-hint-separator "||"
   "String which, if it occurs within a cloze expression, signifies that the
 rest of the expression after the string is a `hint', to be displayed instead of
@@ -653,7 +658,7 @@ regardless of whether the test was successful.")
   (let ((idx (gensym)))
     `(if (null ,place)
          nil
-       (let ((,idx (random* (length ,place))))
+       (let ((,idx (cl-random (length ,place) org-drill-random-state)))
          (prog1 (nth ,idx ,place)
            (setq ,place (append (subseq ,place 0 ,idx)
                                 (subseq ,place (1+ ,idx)))))))))
@@ -673,7 +678,7 @@ value."
         temp
         (len (length list)))
     (while (< i len)
-      (setq j (+ i (random* (- len i))))
+      (setq j (+ i (cl-random (- len i) org-drill-random-state)))
       (setq temp (nth i list))
       (setf (nth i list) (nth j list))
       (setf (nth j list) temp)
@@ -933,7 +938,7 @@ from the entry at point."
   "Returns a random number between 0.5 and 1.5."
   (let ((a 0.047)
         (b 0.092)
-        (p (- (random* 1.0) 0.5)))
+        (p (- (cl-random 1.0 org-drill-random-state) 0.5)))
     (cl-flet ((sign (n)
                     (cond ((zerop n) 0)
                           ((plusp n) 1)
@@ -945,8 +950,8 @@ from the entry at point."
 (defun pseudonormal (mean variation)
   "Random numbers in a pseudo-normal distribution with mean MEAN, range
     MEAN-VARIATION to MEAN+VARIATION"
-  (+  (random* variation)
-      (random* variation)
+  (+  (cl-random variation org-drill-random-state)
+      (cl-random variation org-drill-random-state)
       (- variation)
       mean))
 
@@ -1931,7 +1936,7 @@ Note: does not actually alter the item."
      (let ((drill-sections (org-drill-hide-all-subheadings-except nil)))
        (when drill-sections
          (save-excursion
-           (goto-char (nth (random* (min 2 (length drill-sections)))
+           (goto-char (nth (cl-random (min 2 (length drill-sections)) org-drill-random-state)
                            drill-sections))
            (org-show-subtree)))
        (org-drill--show-latex-fragments)
@@ -1950,7 +1955,9 @@ Note: does not actually alter the item."
      (let ((drill-sections (org-drill-hide-all-subheadings-except nil)))
        (when drill-sections
          (save-excursion
-           (goto-char (nth (random* (length drill-sections)) drill-sections))
+           (goto-char (nth
+                       (cl-random (length drill-sections) org-drill-random-state)
+                       drill-sections))
            (org-show-subtree)))
        (org-drill--show-latex-fragments)
        (ignore-errors
@@ -2381,8 +2388,9 @@ maximum number of items."
                 (not (org-drill-maximum-item-count-reached-p))
                 (not (org-drill-maximum-duration-reached-p)))
            (cond
-            ((< (random* (+ (length *org-drill-new-entries*)
-                            (length *org-drill-old-mature-entries*)))
+            ((< (cl-random (+ (length *org-drill-new-entries*)
+                            (length *org-drill-old-mature-entries*))
+                           org-drill-random-state)
                 (length *org-drill-new-entries*))
              (pop-random *org-drill-new-entries*))
             (t
@@ -2790,7 +2798,7 @@ work correctly with older versions of org mode. Your org mode version (%s) appea
               *org-drill-again-entries* nil)
         (setq *org-drill-session-qualities* nil)
         (setq *org-drill-start-time* (float-time (current-time))))
-      (setq *random-state* (make-random-state t)) ; reseed RNG
+      (setq org-drill-random-state (cl-make-random-state t)) ; reseed RNG
       (unwind-protect
           (save-excursion
             (unless resume-p
@@ -3178,7 +3186,7 @@ the name of the tense.")
         (org-drill-get-verb-conjugation-info)
       (org-drill-present-card-using-text
        (cond
-        ((zerop (random* 2))
+        ((zerop (cl-random 2 org-drill-random-state))
          (format "\nTranslate the verb\n\n%s\n\nand conjugate for the %s.\n\n"
                  infinitive (tense-and-mood-to-string tense mood)))
 
@@ -3278,7 +3286,7 @@ returns its return value."
              (t nil))))
       (org-drill-present-card-using-text
        (cond
-        ((zerop (random* 2))
+        ((zerop (cl-random 2 org-drill-random-state))
          (format "\nTranslate the noun\n\n%s (%s)\n\nand list its declensions%s.\n\n"
                  noun noun-gender
                  (if (or plural definite)
@@ -3334,9 +3342,9 @@ returns its return value."
           (psetf num-min num-max
                  num-max num-min))
       (setq drilled-number
-            (+ num-min (random* (abs (1+ (- num-max num-min))))))
+            (+ num-min (cl-random (abs (1+ (- num-max num-min))) org-drill-random-state)))
       (setq drilled-number-direction
-            (if (zerop (random* 2)) 'from-english 'to-english))
+            (if (zerop (cl-random 2 org-drill-random-state)) 'from-english 'to-english))
       (cond
        ((eql 'to-english drilled-number-direction)
         (org-drill-present-card-using-text
@@ -3366,7 +3374,7 @@ returns its return value."
     (with-hidden-comments
      (with-hidden-cloze-hints
       (with-hidden-cloze-text
-       (case (random* 6)
+       (case (cl-random 6 org-drill-random-state)
          (0
           (org-drill-hide-all-subheadings-except '("Infinitive"))
           (setq prompt
